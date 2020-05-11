@@ -1,0 +1,85 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(lubridate)
+library(rvest)
+library(dplyr)
+```
+
+1) Дані "Відчуття безпеки вдень"
+```{r}
+url <- "https://opendata.city-adm.lviv.ua/datastore/dump/46fcd23d-2aad-4c33-b90f-0ba30211f50f?bom=True"
+safety_day <- read.csv(url(url), encoding = "UTF-8")
+safety_day
+```
+
+```{r}
+safety_day <- safety_day %>%
+  select (IndicatorName, IndicatorValue, IndicatorValueYear)
+
+safety_day
+```
+
+```{r}
+safety_day  <- safety_day %>%
+  filter(IndicatorName == "Відчуття безпеки вдень")
+
+safety_day
+```
+
+
+2) Дані "Відчуття безпеки вночі"
+```{r}
+url <- "https://opendata.city-adm.lviv.ua/datastore/dump/46fcd23d-2aad-4c33-b90f-0ba30211f50f?bom=True"
+safety_night <- read.csv(url(url), encoding = "UTF-8")
+
+safety_night
+```
+
+```{r}
+safety_night <- safety_night %>%
+  select (IndicatorName, IndicatorValue, IndicatorValueYear)
+
+safety_night
+```
+
+```{r}
+safety_night <- safety_night %>%
+  filter(IndicatorName == "Відчуття безпеки вночі")
+
+safety_night
+```
+
+
+### З'єднання 2х таблиць
+
+```{r}
+safety_day_night <- merge(safety_day, safety_night, all=TRUE) %>%
+arrange(IndicatorValueYear) 
+safety_day_night
+```
+
+
+###  Зберігаємо отримані з'єднані дані в csv.
+```{r}
+write.csv(safety_day_night, "safety_day_night.csv", row.names = FALSE)
+```
+
+
+### Що вийшло в результаті 
+
+```{r}
+read.csv("safety_day_night.csv")
+```
+
+```{r}
+chart <- read_csv("safety_day_night.csv") 
+ggplot(chart, aes(IndicatorValueYear, IndicatorValue, IndicatorName)) +
+ geom_point (aes(color = IndicatorName)) +
+ geom_line(color="grey") +
+scale_y_continuous(name = "IndicatorValue", limits = c (0,5))  
+```
+
