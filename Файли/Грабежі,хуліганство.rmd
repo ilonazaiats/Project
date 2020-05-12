@@ -1,0 +1,118 @@
+---
+title: "Проєкт: Вулиці розбитих ліхтарів"
+output: html_notebook
+---
+  
+```{r}
+library(tidyverse)
+library(lubridate)
+library(rvest)
+library(dplyr)
+```
+
+## Підготовка даних з хуліганством
+```{r}
+url <- "https://opendata.city-adm.lviv.ua/datastore/dump/47b6d340-110a-4a22-b934-47f840b7e8fe?bom=True"
+hooliganism <- read.csv(url(url), encoding = "UTF-8", na = c("NULL", "NONE"))
+
+hooliganism
+```
+
+### 2. Вибираємо потрібні колонки з даними
+```{r}
+hooliganism <- hooliganism %>%
+  select (IndicatorName, IndicatorValue, IndicatorValueYear)
+
+hooliganism
+```
+
+### 5. Фільтрування випадків хуліганства
+```{r}
+hooliganism <- hooliganism %>%
+  filter(IndicatorName == "Випадки хуліганства")
+
+hooliganism
+```
+
+## Підготовка даних з крадіжками
+```{r}
+url <- "https://opendata.city-adm.lviv.ua/datastore/dump/47b6d340-110a-4a22-b934-47f840b7e8fe?bom=True"
+thefts <- read.csv(url(url), encoding = "UTF-8", na = c("NULL", "NONE"))
+
+thefts
+```
+
+### 2. Вибираємо потрібну колонку з даними
+```{r}
+thefts <- thefts %>%
+  select (IndicatorName, IndicatorValue, IndicatorValueYear)
+
+thefts
+```
+
+### 5. Фільтрування кількості крадіжок
+```{r}
+thefts <- thefts %>%
+  filter(IndicatorName == "Кількість крадіжок" )
+
+thefts
+```
+
+### 7. З'єднання
+З'єднуємо дані та сортуємо їх.
+```{r}
+safety <- merge(hooliganism, thefts, all=TRUE) %>%
+  arrange(IndicatorValueYear)
+
+safety
+```
+
+# Обрахунок відсотка
+```{r}
+safety <- safety %>%
+  group_by(IndicatorName) %>%
+  mutate(IndicatorValue = as.character(IndicatorValue) %>% as.numeric()) %>%
+  mutate(percent = IndicatorValue/IndicatorValue[1]) %>%
+  ungroup()
+
+safety
+```
+
+
+### 8. Зберігаємо отримані з'єднані дані в csv.
+```{r}
+write.csv(safety, "safety.csv", row.names = FALSE)
+```
+
+
+### Що вийшло в результаті 
+```{r}
+read.csv("safety.csv")
+```
+
+# Малюємо графіки
+```{r}
+library(ggplot2)
+library(dplyr)
+
+ggplot(safety, aes(IndicatorValueYear, IndicatorValue)) +
+  geom_line(color='steelblue', size=3, alpha=0.4) +
+  geom_point() +
+  scale_y_continuous (name = "Кількість") +
+  scale_x_continuous(name = "Рік", breaks = 2010:2019) +
+  theme_minimal() +
+  facet_wrap(vars(IndicatorName))
+```
+
+
+# Ще 1 варіант графіка
+```{r}
+chart <- read.csv("safety.csv")
+
+  ggplot(chart, aes(IndicatorValueYear, IndicatorValue, color = IndicatorName)) +
+     geom_line(size=1, alpha=0.4) +
+  geom_point() +
+  theme_minimal() 
+
+```
+
