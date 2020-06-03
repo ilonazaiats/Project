@@ -1,2 +1,2 @@
 ## Посилання на веб-сторінку:
-https://ilonazaiats.github.io/Project/Веб-сторінка проєкту
+https://ilonazaiats.github.io/Project/Web_page
