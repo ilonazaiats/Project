@@ -1,0 +1,114 @@
+---
+title: "Проєкт: Вулиці розбитих ліхтарів"
+output: html_notebook
+---
+  
+```{r}
+library(tidyverse)
+library(lubridate)
+library(rvest)
+library(dplyr)
+```
+
+## Підготовка даних з кількістю звернень по вуличному освітленню на гарячу лінію
+```{r}
+url <- "https://opendata.city-adm.lviv.ua/datastore/dump/4cdc01e3-2ae8-4c3a-8667-d77571f5fcb8?bom=True"
+lightcalls <- read.csv(url(url), encoding = "UTF-8", na = c("NULL", "NONE"))
+
+lightcalls
+```
+
+### 2. Вибираємо потрібні колонки з даними
+```{r}
+lightcalls <- lightcalls %>%
+  select(IndicatorName, IndicatorValue, IndicatorValueYear)
+
+lightcalls
+```
+
+### 5. Фільтрування вуличного освітлення
+```{r}
+lightcalls <- lightcalls %>%
+  filter(IndicatorName == "Вуличне освітлення") %>%
+  arrange(IndicatorValueYear)
+
+lightcalls
+```
+```{r}
+url <- "https://opendata.city-adm.lviv.ua/datastore/dump/4cdc01e3-2ae8-4c3a-8667-d77571f5fcb8?bom=True"
+calls <- read.csv(url(url), encoding = "UTF-8", na = c("NULL", "NONE"))
+
+calls
+```
+
+### 2. Вибираємо потрібні колонки з даними
+```{r}
+calls <- calls %>%
+  select(IndicatorName, IndicatorValue, IndicatorValueYear)
+
+calls
+```
+
+
+### 5. Фільтрування вуличного освітлення
+```{r}
+calls <- calls %>%
+  filter(IndicatorName == "Загальна кількість дзвінків, зафіксованих на Гарячій лінії міста") %>%
+  arrange(IndicatorValueYear)
+
+calls
+```
+
+### 7. З'єднання
+З'єднуємо дані та сортуємо їх.
+```{r}
+percent_calls <- merge(lightcalls, calls, all=TRUE) %>%
+  arrange(IndicatorValueYear) 
+
+ percent_calls <- pivot_wider(data = safety, names_from = IndicatorName, values_from = 	
+IndicatorValue, IndicatorValueYear) %>%
+   mutate('Вуличне освітлення' = as.character(`Вуличне освітлення`) %>% as.numeric()) %>%
+   mutate(`Загальна кількість дзвінків, зафіксованих на Гарячій лінії міста` = as.character(`Загальна кількість дзвінків, зафіксованих на Гарячій лінії міста`) %>% as.numeric()) %>%
+   mutate(Відсоток = `Вуличне освітлення`/	
+`Загальна кількість дзвінків, зафіксованих на Гарячій лінії міста`)
+
+
+percent_calls
+```
+
+
+### 8. Зберігаємо отримані з'єднані дані в csv.
+```{r}
+write.csv(percent_calls, "percent_calls", row.names = FALSE)
+```
+
+
+### Що вийшло в результаті 
+```{r}
+read.csv("percent_calls.csv")
+```
+
+# Малюємо графік
+
+```{r}
+counts <- table(percent_calls$, percent_calls$IndicatorValue)
+barplot(counts, main="Car Distribution by Gears and VS",
+  xlab="IndicatorValueYear", col=c("darkblue","red"),
+  legend = rownames(counts), beside=TRUE)
+
+```
+
+```{r}
+ggplot(data = percent_calls, aes(x = IndicatorValueYear, y = Відсоток)) +
+  geom_line(size=1, alpha=0.4) +
+  geom_point(aes(IndicatorValueYear, Відсоток, size = 2), color = "cornflowerblue") + 
+  labs(title = "Звернення на гарячу лінію щодо освітлення", 
+       x = "Рік", 
+       y = "% від всіх звернень на гарячу лінію") + 
+  scale_x_continuous(name = "Рік", breaks = 2010:2019) +
+  scale_y_continuous(label = scales::percent)
+
+ggsave("4.png")
+
+```
+
